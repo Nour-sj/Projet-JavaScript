@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>Mr Robot !</title>
+	<link rel="stylesheet" href="./Style/style.css">
+</head>
+<body >
+ <div id =playground  >
+	<img src="./desert_sand.jpg" id="sand">
+	<div id="score"></div>
+</div>
+
+
+<script type="text/javascript">
+
+//déclaration de variables globales
+
+	
+let secoups=[];//tableau de secoups
+let i = 0;//indice d'insertion dans le tableau 
+
+let score = 0 ;//score 
+
+//variables de son 
+
+let upSound = new Audio('sounds/blast.mp3');
+let expSound = new Audio('sounds/explosion.mp3');
+let gameSound = new Audio('sounds/cantina.mp3');
+let endSound = new Audio('sounds/end.mp3');
+
+
+
+//met à jour le score selon la secoupe passée en paramétre 
+updateScore = function(sprite = Secoupe){
+
+
+	//si darthvader on perd 20 points
+	if (sprite.dom.id == 'darthvader.png'){
+		var points= -20;
+		expSound.play();
+	}
+	else{// si on attrape des secoups on gagne 1 point
+		var points= 1;
+		upSound.play();
+	}
+	score += points; 
+	if(score<0)
+		game.run= false ;
+//affichage du score 
+  	let scoreboard = document.getElementById('score');
+  	scoreboard.innerHTML ="score : "+ score;	
+}
+
+    
+   
+
+
+
+function getStyleHeight(id){// retourne la hauteur selon l'id 
+	let gameArea = document.getElementById(id);
+	let height =parseInt(window.getComputedStyle(gameArea, null).getPropertyValue("height"));
+
+	return (height) ;
+}
+
+function getStyleWidth(id){//// retourne la largeur  selon l'id 
+
+	let gameArea = document.getElementById(id);
+	let width = parseInt(window.getComputedStyle(gameArea, null).getPropertyValue("width"));
+	
+  	return (width) ;
+}
+
+class Position {
+
+ 	constructor(x,y) {
+ 		if(this==undefined || this== window){
+		return new Position(x,y);
+		}
+   		this.posX = parseInt(x);
+    	this.posY = parseInt(y);
+    }
+
+    add(pos=Position()){
+    	this.posX+= pos.posX;
+		this.posY+=pos.posY;
+    	}
+}
+
+class Size2D{
+
+	constructor(width,height){
+		if(this==undefined || this== window){
+		return new Size2D(width,height);
+		}
+		this.width=width;
+		this.height=height;
+	}
+}
+
+class Rectangle {
+	constructor (pos=Position(),size=Size2D()){
+		this.pos= pos;
+		this.size=size;
+	}
+	//tester l'intersection entre deux rectangles 
+	 static intersection(r1,r2){
+
+	 	       if (r1.pos.posX < r2.pos.posX && r2.pos.posX > r1.pos.posX + r1.size.height){
+                    return false;
+                }
+                if(r2.pos.posX < r1.pos.posX && r1.pos.posX > r2.pos.posX + r2.size.height){
+                    return false;
+                }
+                if(r1.pos.posY < r2.pos.posY && r2.pos.posY > r1.pos.posY + r1.size.width){
+                    return false;
+                }
+                if(r2.pos.posY < r1.pos.posY && r1.pos.posY > r2.pos.posY + r2.size.width){
+                    return false;
+                }
+
+                    return true;
+    }
+}
+
+class Sprite {
+	constructor(imgPath,insideDOM){
+		this.pos= new Position();
+		this.dom = document.createElement("img");
+		this.dom.src=imgPath;
+		this.dom.id=imgPath;
+		insideDOM.appendChild(this.dom);
+		this.speedX;
+		this.speedY;	
+	}
+
+
+	
+	moveTo(pos=Position){//positionne l'objet sur lequel elle est appliquée à la position donnéé en parametre 
+
+		this.pos.posX = pos.posX;
+		this.pos.posY = pos.posY;
+		this.dom.style.top = pos.posX+'px';
+		this.dom.style.left = pos.posY+'px';		 
+	
+	}
+
+	moveRel(pos=Position){//déplace l'objet sur lequel en ajoutant la position donnéé en parametre à sa position actuelle													       			
+		this.pos.add(pos);
+		this.moveTo(this.pos);
+	}
+
+	moveFrame(duration){// deplace en fonction de la vitesse
+
+		let position = new Position((this.speedX*(duration/1000)),(this.speedY*(duration/1000)));
+		this.moveRel(position);
+	}
+}
+
+
+class Robot extends Sprite {
+
+		constructor(imgPath,insideDOM=window.document.getElementById("playground")){
+			super(imgPath,insideDOM);//fait appel à la fonction Sprite
+			this.size= new Size2D (71,91);
+			this.rectangle= new Rectangle (this.pos,this.size);
+		}
+
+		moveTo(pos=Position){//méthode redifinie pour empeher le robot de sortir de l'aire de jeux 
+
+		if (pos.posY >= getStyleWidth("sand") - (getStyleWidth(this.dom.id))){
+		this.pos.posY = (getStyleWidth("sand"))-(getStyleWidth(this.dom.id));}
+
+		if (pos.posY < 0 ){
+		this.pos.posY = 0;}
+
+		if (pos.posX >= getStyleHeight("sand") - (getStyleHeight(this.dom.id))){
+		this.pos.posX = (getStyleHeight("sand")) - (getStyleHeight(this.dom.id));}
+
+		if (pos.posX < 0 ){
+		this.pos.posX = 0;}
+
+			super.moveTo(pos)
+		}
+}
+
+
+class Secoupe extends Sprite {
+
+	constructor(imgPath,insideDOM=window.document.getElementById("playground")){
+		super(imgPath,insideDOM);
+		this.size= new Size2D (128,128);
+		this.rectangle= new Rectangle (this.pos,this.size);
+	}
+				
+	moveTo(pos=Position)	{//méthode redifinie pour supprimer les secoupes qui dépassent l'aire de jeux 
+		if(this.pos.posX >= getStyleHeight("sand")-this.size.height ){
+			let dom = this.dom.parentElement;
+			dom.removeChild(this.dom);
+			secoups.splice(secoups.indexOf(this),1);
+		}
+		super.moveTo(pos);	
+	}
+}
+        
+
+//retourne un nombre aléatoir entre min et max 
+function getRandom(min, max) {
+  	min = Math.ceil(min);
+  	max = Math.floor(max);
+  	return Math.floor(Math.random() * (max - min +1)) + min;
+	
+}	
+
+let game ={//initialisation de la partie 
+	arrowLeft : false,
+	arrowRight : false,
+	arrowUp : false,
+	arrowDown:false,
+	r2d2 : new Robot ("R2D2.png"),
+	score : 0,
+	run : true,
+	tFrameLast : 0
+	};
+
+	 
+game.getSecoupe = function (){//retourne une secoupe aléatoirement avec une position aléatoire
+	let indiceSecoupe = [
+		'./naboo_starfighter.png','./x_wing.png','./obi_wan_starfighter.png','./anakin_starfighter.png','darthvader.png'
+		];
+
+	let sec = new Secoupe(indiceSecoupe[parseInt(getRandom(0,indiceSecoupe.length-1))]);
+	sec.moveTo(p=new Position (-150,getRandom(1,getStyleWidth("sand")-(sec.size.width))));
+	return sec ;
+	}	
+
+//placer le robot au milieu en haut 
+game.r2d2.moveTo(posDepart=new Position ((getStyleHeight("sand")/2),getStyleWidth("sand")/2));
+			
+	
+document.addEventListener("keydown", function(event){ //Ajouter les evenements des touches clavier(les flèches)
+
+	if (event.key==="ArrowLeft")
+	game.arrowLeft=true;
+					 
+	if (event.key=== "ArrowUp")
+	game.arrowUp=true;	
+
+	if (event.key=== "ArrowRight")
+	game.arrowRight=true;
+	  					
+	if (event.key==="ArrowDown")
+	game.arrowDown=true;
+	 					 
+	});	
+
+
+document.addEventListener("keyup", function(event) {
+					
+	if (event.key==='s')
+	  	game.run=false;
+	 					 
+	if (event.key==='ArrowLeft')
+	  	game.arrowLeft=false;
+	 					 
+	if (event.key=== "ArrowUp")
+	  	game.arrowUp=false;
+	  						 
+	if (event.key=== "ArrowRight")
+	  	game.arrowRight=false;
+	  					
+	if (event.key==="ArrowDown")
+	  	game.arrowDown=false;		
+	});	
+
+
+game.update = function (tFrame){
+
+	let tps=tFrame-game.tFrameLast;		
+	let laps = getRandom(0,100);
+
+	if (laps<3){ // 3 chance sur 100 d'avoir une secoupe 
+		//injection d'une secoupe dans le jeu
+		secoups.push(game.getSecoupe() );
+	}
+	
+	for(let i =0; i< secoups.length-1;i++){//boucle pour avancer les secoupes du tableau
+		secoups[i].speedX=300;
+		secoups[i].speedY=0;
+		secoups[i].moveFrame(tps);
+		
+		if((Rectangle.intersection(game.r2d2.rectangle, secoups[i].rectangle))){
+			//si le robot attrape une secoupe on l'éfface du tableau secoups et on met a jour le score 	
+			let dom = secoups[i].dom.parentElement;
+			dom.removeChild(secoups[i].dom);
+			updateScore(secoups[i]);
+			secoups.splice(i,1);
+		}	
+	}
+
+	if(game.arrowLeft){
+		game.r2d2.speedY=-700;
+		game.r2d2.speedX=0;
+		game.r2d2.moveFrame(tps);					
+	} 
+
+	if(game.arrowUp){
+		game.r2d2.speedX=-700;
+		game.r2d2.speedY=0;
+		game.r2d2.moveFrame(tps);
+						
+	} 
+
+	if(game.arrowRight){
+		game.r2d2.speedY=700;
+		game.r2d2.speedX=0;
+		game.r2d2.moveFrame(tps);
+						
+	} 
+	if(game.arrowDown){
+		game.r2d2.speedX=700;
+		game.r2d2.speedY=0;
+		game.r2d2.moveFrame(tps);				
+	}
+	game.tFrameLast=tFrame; // tFrame est le temps d'appel de l'animation passé à main en ms
+
+}				
+				
+function main(tFrame) {// boucle d'animation
+    let anim = window.requestAnimationFrame(main);
+    if (!game.run) {
+     	window.cancelAnimationFrame(anim);
+        gameSound.pause();
+        if(score<0){
+       		alert('Game Over !');     
+        }else
+        alert ('votre score est '+score);
+        
+    }
+     else {
+       		game.update(tFrame);
+    		}
+}	
+
+main(10);
+gameSound.play();	 		
+</script>
+</body>
+</html>

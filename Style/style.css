@@ -1,0 +1,61 @@
+#playground * {
+	position: absolute;
+
+}
+
+
+#sand {
+	height: 100%;
+	width: 100%;	
+	opacity: 0.6;
+	
+}
+
+
+.sa {
+	height: 100%;
+	width: 10%;
+}
+
+
+.qa{
+	 width: auto;
+	 border: 1px solid black;
+}
+
+
+
+
+
+
+
+
+
+
+	h2 {
+		color: #d54d7b;
+		font-family: "Great Vibes", cursive;
+		font-size: 80px;
+		line-height: 80px;
+		font-weight: normal;
+		margin-bottom: 0px;
+		margin-top: 0px;
+		text-align: center;
+		text-shadow: 0 1px 1px #fff;
+	}
+	
+
+
+
+
+.
+
+
+::placeholder
+{
+	color:rgba(1, 2, 68, 0.5); 
+}
+	
+
+
+
